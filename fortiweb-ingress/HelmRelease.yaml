@@ -1,0 +1,38 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: fortiweb-ingress-controller
+  namespace: cluster-config
+spec:
+  targetNamespace: fortiweb-ingress
+  releaseName: fortiweb-ingress-controller
+  chart:
+    spec:
+      chart: fwb-k8s-ctrl
+      sourceRef:
+        kind: HelmRepository
+        name: fortiweb-ingress-controller
+        namespace: cluster-config
+      version: "2.0.1"
+  interval: 10m0s
+  values:
+    tolerations:
+      - key: "CriticalAddonsOnly"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+    nodeSelector: # Selector to ensure pods are scheduled on the desired nodes
+      system-pool: "true"
+    affinity: # Additional affinity rules
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: "system-pool"
+                  operator: "In"
+                  values:
+                    - "true"
+  install:
+    remediation:
+      retries: 3
